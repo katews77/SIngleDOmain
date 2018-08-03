@@ -71,7 +71,8 @@
         "adLBBE":"LBBE",
         "adRDPNAT":"adRDP",
         "adNicIPAddress":"10.0.0.4",
-        "adNicName":"DPADNIC"
+        "adNicName":"DPADNIC",
+        "adVmName":"VeryFirstDC"
 
 
      },
@@ -217,6 +218,112 @@
                     ]
                 }
             
+        },
+
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('adVMName')]",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.network/networkInterfaces', Variables('ADNicName'))]",
+                "[resourceId('Microsoft.compute/availabiltySets',Variables('adAvailabiltySetName'))]",
+                "[resourceId('Microsoft.network/loadbalancers' , Variables('adLBName'))]"
+            ],
+            "properties":{
+                "hardwareProfile":{
+                    "vmSize":"Standard_D2_v2"
+                },
+                "availabilitySet":{
+                    "id": "[resourceId('Microsoft.compute/availabilitySets', Variables('adAvailabilitySetName'))]"
+                },
+                "osProfile":{
+                    "computerName": "[variables('adVMname')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile":{
+                    "imageReference":{
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
+                        "version": "Latest"
+                    },
+                    "osDisk":{
+                        "name": "[concat(Variables('adVMName'),'OSDISK')]",
+                        "caching":"ReadWrite",
+                        "createOption":"FromImage",
+                        "managedDisk":{
+                            "storageAccountType":"Standard_LRS"
+                        }
+
+                        
+                        
+                    },
+                    "dataDisks":[
+                        {
+                            "name": "[concat(Variables('adVMName'),'DatenDiskette')]",
+                            "caching":"None",
+                            "createOption": "Empty",
+                            "diskSizeGB":20,
+                            "managedDisk":{
+                                "storageAccountType":"Standard_LRS"
+                            },
+                            "lun":0
+
+
+                        }
+                    ]
+
+
+                },
+
+                "networkProfile":{
+                    "networkInterfaces":[
+                        {
+                            "id": "[resourceId('Microsoft.network/networkInterfaces', Variables('adNicName'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                   "type": "extensions",
+                   "Name":"CreateActiveDirectoryForest",
+                   "apiVersion": "2017-03-30",
+                   "location":"[parameters('Location')]",
+                   "Dependson":[
+                       "[resourceId('Microsoft.compute/VirtualMachines', Variables('adVMName'))]"
+                   ],
+                   "properties":{
+                       "publisher": "Microsoft.Powershell",
+                       "type": "DSC",
+                       "typeHandlerVersion": "2.19",
+                       "autoUpgradeMinorVersion": true,
+                       "settings": {
+                           "ModulesUrl": "[concat(Parameters('_artifactslocation'), 'DSC/CreateADPDC.zip', parameters('_ArtifactsLocationSasToken'))]",
+                           "configurationFunction": "CreateADPDC.ps1\\CreateADPDC",
+                           "properties":{
+                               "DomainName": "[parameters('domainname')]",
+                               "AdminCreds":{
+                                   "Username":"[parameters('adminUsername')]",
+                                   "Password":"PrivateSettingsRef:AdminPassword"
+
+
+                               }
+                           }
+                       },
+                       "ProtectedSetting":{
+                           "items":{
+                               "AdminPassword":"[parameters('adminPassword')]"
+                           }
+                       }
+
+
+                   }
+
+                }
+            ]
         }
     
 
