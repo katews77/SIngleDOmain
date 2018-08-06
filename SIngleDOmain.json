@@ -61,7 +61,7 @@
      },
     "variables": { 
         "PublicIPAddressName":"DPPublicIPAdress1",
-        "ADAvailabilitySetName":"DPHA",
+        "adAvailabilitySetName":"DPHA",
         "VirtualNetworkName":"DPTest",
         "VirtualNetworkAddressRange":"10.0.0.0/16",
         "adSubnetAddressPrefix":"10.0.0.0/24",
@@ -82,7 +82,7 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('PublicIPAddressName')]",
             "apiVersion": "2016-03-30",
-            "location": "parameters(location)]",
+            "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod":"Dynamic",
                 "dnsSettings":{
@@ -96,7 +96,7 @@
             "type": "Microsoft.Compute/availabilitySets",
             "apiVersion": "2017-03-30",
             "location":"[Parameters('location')]",
-            "name": "[variables('ADAvailabilitySetName')]",
+            "name": "[variables('adAvailabilitySetName')]",
             "properties":{
                 "platformFaultDomainCount":2,
                 "platformUpdateDomainCount":20
@@ -115,7 +115,7 @@
             "properties":{
                 "mode":"Incremental",
                 "templateLink":{
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet.json', parameters('_artifactslocationSasToken'))]",
+                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedTemplates/vnet.json', parameters('_artifactslocationSasToken'))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -141,6 +141,7 @@
 
         {
             "type":"Microsoft.Network/loadBalancers",
+            "apiVersion": "2016-03-30",
             "name":"[variables('adLBName')]",
             "location":"[Parameters('Location')]",
             "dependsOn": [
@@ -190,7 +191,7 @@
             "dependsOn": [
                 
                     "Microsoft.Resources/deployments/Vnet",
-                    "resourceID('Microsoft.network/loadbalancers', Variables('adLBName'))]"
+                    "[resourceID('Microsoft.network/loadbalancers', Variables('adLBName'))]"
                 ],
                 "properties": {
                     "ipConfigurations":[
@@ -227,7 +228,7 @@
             "location": "[parameters('Location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.network/networkInterfaces', Variables('ADNicName'))]",
-                "[resourceId('Microsoft.compute/availabiltySets',Variables('adAvailabiltySetName'))]",
+                "[resourceId('Microsoft.compute/availabilitySets',Variables('adAvailabilitySetName'))]",
                 "[resourceId('Microsoft.network/loadbalancers' , Variables('adLBName'))]"
             ],
             "properties":{
